@@ -1,0 +1,18 @@
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore local virtualenv (if inside project)
+venv/
+
+# Ignore environment files
+.env
+
+# Ignore local config files
+app/config/*.config
+
+# Ignore compiled assets or editor files
+*.log
+.DS_Store
+.idea/
+.vscode/
