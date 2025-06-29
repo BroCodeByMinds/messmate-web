@@ -60,6 +60,7 @@ Mess admins should be able to register or log in to their admin dashboard and fi
   "address": "Near ABC Hostel, Pune",
   "description": "Home-cooked food with tiffin service"
 }
+````
 
 ---
 
