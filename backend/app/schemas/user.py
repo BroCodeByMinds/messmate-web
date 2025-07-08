@@ -12,11 +12,8 @@ class UserLogin(BaseModel):
     password: str = Field(...)
 
 class UserResponse(BaseModel):
-    id: int
-    name: str
-    email: EmailStr
-    phone: str
-    role: str
+    user_id: int = Field(...)
+    email: EmailStr = Field(...)
 
     class Config:
         orm_mode = True

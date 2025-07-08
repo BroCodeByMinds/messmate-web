@@ -8,10 +8,9 @@ class UserRepository:
     def get_user_by_email(self, email: str) -> UserORM | None:
         return self.db.query(UserORM).filter(UserORM.email == email).first()
 
-    def create_user(self, user_data: dict) -> UserORM:
-        user = UserORM(**user_data)
+    def create_user(self, user: UserORM) -> UserORM:
         self.db.add(user)
-        self.db.commit()
+        self.db.flush()  # Ensures ID is generated
         self.db.refresh(user)
         return user
 
