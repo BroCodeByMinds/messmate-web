@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.models.base import Base
 from app.models.user_orm import UserORM
+from app.models.mess_orm import MessORM
 from app.config.loader import ConfigLoader
 
 # Load .env and resolve project root
