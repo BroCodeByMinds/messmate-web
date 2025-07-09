@@ -1,6 +1,5 @@
 import os
 import sys
-import os
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
@@ -18,11 +17,13 @@ def create_database_if_not_exists():
     password = db_config["password"]
     host = db_config["host"]
     port = db_config["port"]
-    schema = db_config.get("schema", "public")
+    schema = db_config.get("schema", "master")
 
-    # Connect to default DB to create target DB
+    print(f"Checking database '{dbname}' and schema '{schema}'...")
+
+    # Step 1: Connect to default 'postgres' DB to check/create target DB
     default_conn = psycopg2.connect(
-        dbname=dbname,
+        dbname='postgres',
         user=user,
         password=password,
         host=host,
@@ -31,20 +32,18 @@ def create_database_if_not_exists():
     default_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = default_conn.cursor()
 
-    # Check if DB exists
-    cursor.execute(f"SELECT 1 FROM pg_database WHERE datname = %s", (dbname,))
-    exists = cursor.fetchone()
-
-    if not exists:
-        print(f"Creating database '{dbname}'...")
-        cursor.execute(f"CREATE DATABASE {dbname}")
+    # Step 2: Check/create DB
+    cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (dbname,))
+    if cursor.fetchone() is None:
+        print(f"✅ Creating database '{dbname}'...")
+        cursor.execute(f'CREATE DATABASE "{dbname}"')
     else:
-        print(f"Database '{dbname}' already exists.")
+        print(f"ℹ️  Database '{dbname}' already exists.")
 
     cursor.close()
     default_conn.close()
 
-    # Connect to the target DB to create schema
+    # Step 3: Connect to the target DB to check/create schema
     db_conn = psycopg2.connect(
         dbname=dbname,
         user=user,
@@ -54,18 +53,19 @@ def create_database_if_not_exists():
     )
     db_cursor = db_conn.cursor()
 
-    db_cursor.execute(f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = %s", (schema,))
-    schema_exists = db_cursor.fetchone()
-
-    if not schema_exists:
-        print(f"Creating schema '{schema}'...")
-        db_cursor.execute(f"CREATE SCHEMA {schema}")
+    db_cursor.execute("SELECT 1 FROM information_schema.schemata WHERE schema_name = %s", (schema,))
+    if db_cursor.fetchone() is None:
+        print(f"✅ Creating schema '{schema}'...")
+        db_cursor.execute(f'CREATE SCHEMA "{schema}"')  # Removed AUTHORIZATION clause
     else:
-        print(f"Schema '{schema}' already exists.")
+        print(f"ℹ️  Schema '{schema}' already exists.")
 
     db_conn.commit()
     db_cursor.close()
     db_conn.close()
+
+    print("✅ Database and schema setup complete.")
+
 
 if __name__ == "__main__":
     create_database_if_not_exists()

@@ -7,11 +7,14 @@ load_dotenv()
 
 class ConfigLoader:
     def __init__(self):
-        self.env = os.getenv("ENV", "dev")
+        self.env = os.getenv("ENV", "local")
         self.region = os.getenv("AWS_REGION", "ap-south-1")
         self.parameter_name = f"/messmate/config/{self.env}"
 
-        if self.env == "local" and os.path.exists("app/config/local.config"):
+        # Get project root from current file path (app/config/loader.py)
+        self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+        if self.env == "local" and os.path.exists(os.path.join(self.project_root, "app/config/local.config")):
             self._config = self._load_from_local_file()
         else:
             self._config = self._load_from_ssm()
@@ -41,4 +44,4 @@ class ConfigLoader:
 
     def get_database_url(self) -> str:
         db = self._config["database"]
-        return f"postgresql://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['name']}"
+        return db['url']
