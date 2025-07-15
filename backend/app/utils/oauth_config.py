@@ -4,7 +4,7 @@ from starlette.config import Config
 
 from app.config.loader import ConfigLoader
 
-config_data = ConfigLoader().config.get("google", {})
+config_data = ConfigLoader().get_google_oauth_config()
 
 config = Config(environ={
     "GOOGLE_CLIENT_ID": config_data.get("client_id"),
