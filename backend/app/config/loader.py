@@ -45,3 +45,6 @@ class ConfigLoader:
     def get_database_url(self) -> str:
         db = self._config["database"]
         return db['url']
+    
+    def get_google_oauth_config(self) -> dict:
+        return self._config["google_oauth"]

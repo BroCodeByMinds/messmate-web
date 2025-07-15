@@ -1,8 +1,7 @@
 from .auth import router as auth_router
-from .user import router as user_router
-
+from .oauth import router as oauth_router
 
 all_routes = [
     (auth_router, "/api", "Auth"),
-    (user_router, "/api", "User"),
+    (oauth_router, "/api", "User"),
 ]

@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app.schemas.user import UserCreate, UserResponse
 from app.utils.response_builder import ResponseBuilder
 from app.repositories.user_repository import UserRepository
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.security import get_password_hash, verify_password, create_jwt_token
 
 
 class UserService:
@@ -61,14 +61,39 @@ class UserService:
                 messages.USER_REGISTRATION_FAILED,
                 {"error": str(exc)}
             )
-    
 
-    def login_user(self, email: str, password: str) -> str:
-        user = self.repo.get_user_by_email(email)
-        if not user or not verify_password(password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        return create_access_token(
-            data={"sub": str(user.id)},
-            expires_delta=timedelta(minutes=30)
-        )
+
+    def login_or_register_oauth_user(self, email: str, name: str, role: str) -> JSONResponse:
+        try:
+            with self.repo.db.begin():
+                user = self.repo.get_user_by_email(email)
+
+                if not user:
+                    user = UserORM(
+                        email=email,
+                        name=name,
+                        role=role,
+                        is_google_user=True
+                    )
+                    user = self.repo.create_user(user)
+
+                token = create_jwt_token(user.id, user.email, user.role)
+
+            return self.resp_builder.build_success_response(
+                message=messages.USER_LOGGED_IN_SUCCESSFULLY,
+                data={
+                    "access_token": token,
+                    "token_type": "bearer",
+                    "role": user.role,
+                    "email": user.email
+                }
+            )
+        except Exception as e:
+            self.repo.db.rollback()
+            return self.resp_builder.build_server_error_response(
+                message=messages.USER_OAUTH_FAILED,
+                data={"error": str(e)}
+            )
+
+
