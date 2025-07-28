@@ -14,3 +14,6 @@ class MessRepository:
         self.db.flush()  # Ensures ID is generated
         self.db.refresh(user)
         return user
+    
+    def get_active_messes(self):
+        return self.db.query(MessORM).filter(MessORM.is_deleted.is_(False)).all()

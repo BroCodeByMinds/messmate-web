@@ -7,3 +7,4 @@ USER_REGISTRATION_FAILED= "User registration failed"
 MESS_ALREADY_EXISTS = "Mess already registered"
 MESS_REGISTRATION_FAILED= "Mess registration failed"
 MESS_REGISTERED_SUCCESSFULLY = "Mess registered successfully"
+FAILED_TO_FETCH_MESSES = 'Failed to fetch messes'

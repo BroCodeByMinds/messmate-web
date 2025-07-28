@@ -14,3 +14,9 @@ class MessCreate(BaseModel):
 class MessResponse(BaseModel):
     mess_id: int = Field(..., description="Unique ID of the created mess")
     name: str = Field(..., description="Mess name")
+    city: str = Field(..., description="City name")
+    type: str = Field(..., description="Meal type")
+    monthly_price: int = Field(..., description="Monthly price")
+    address: str = Field(..., description="Address")
+    description: Optional[str] = Field(None, description="Description")
+    contact_number: Optional[str] = Field(None, description="Contact number")
