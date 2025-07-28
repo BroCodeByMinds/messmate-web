@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from app.schemas.user import UserCreate, UserResponse
 from app.utils.response_builder import ResponseBuilder
 from app.repositories.user_repository import UserRepository
+from app.decorators.db_error_handler import db_error_handler
 from app.core.security import get_password_hash, verify_password, create_access_token
 
 
@@ -16,51 +17,49 @@ class UserService:
         self.repo = UserRepository(db)
         self.resp_builder = resp_builder
 
+    @db_error_handler(messages.USER_REGISTRATION_FAILED)
     def register_user(self, user_create: UserCreate) -> JSONResponse:
         """
-        Registers a new user in the system.
+        Register a new user in the system.
 
-        - Ensures email uniqueness.
-        - Hashes the password securely.
-        - Stores user data in the database within a transactional scope.
+        This method:
+        - Validates uniqueness of the email address.
+        - Hashes the password securely using a utility function.
+        - Persists user data into the database inside an atomic transaction.
+        - Returns a structured response on success or conflict.
+
+        Parameters:
+            user_create (UserCreate): Pydantic model containing user registration details.
 
         Returns:
-            JSONResponse: A structured success or error response with appropriate HTTP status code.
+            JSONResponse: 
+                - 201 Created with user info on success.
+                - 409 Conflict if the email already exists.
+                - 500 Internal Server Error on unexpected failure (handled by @db_error_handler).
+        
+        Exceptions:
+            Any exceptions raised during DB operations are automatically caught and handled 
+            by the `@db_error_handler`, which rolls back the transaction and returns an appropriate error response.
         """
-        try:
-            with self.repo.db.begin():  # Atomic transaction
-                if self.repo.get_user_by_email(user_create.email):
-                    return self.resp_builder.build_conflict_response(
-                        messages.EMAIL_ALREADY_EXISTS
-                    )
+        with self.repo.db.begin():
+            if self.repo.get_user_by_email(user_create.email):
+                return self.resp_builder.build_conflict_response(
+                    messages.EMAIL_ALREADY_EXISTS
+                )
 
-                hashed_pw = get_password_hash(user_create.password)
-                user_data = user_create.model_dump(exclude={"password"})
-                user = UserORM(**user_data, hashed_password=hashed_pw)
+            hashed_pw = get_password_hash(user_create.password)
+            user_data = user_create.model_dump(exclude={"password"})
+            user = UserORM(**user_data, hashed_password=hashed_pw)
 
-                created_user = self.repo.create_user(user)
+            created_user = self.repo.create_user(user)
 
-            return self.resp_builder.build_created_response(
-                messages.USER_REGISTERED_SUCCESSFULLY,
-                UserResponse(
-                    user_id=created_user.id,
-                    email=created_user.email
-                ).model_dump()
-            )
-
-        except SQLAlchemyError as db_error:
-            self.repo.db.rollback()
-            return self.resp_builder.build_server_error_response(
-                messages.USER_REGISTRATION_FAILED,
-                {"db_error": str(db_error)}
-            )
-
-        except Exception as exc:
-            self.repo.db.rollback()
-            return self.resp_builder.build_server_error_response(
-                messages.USER_REGISTRATION_FAILED,
-                {"error": str(exc)}
-            )
+        return self.resp_builder.build_created_response(
+            messages.USER_REGISTERED_SUCCESSFULLY,
+            UserResponse(
+                user_id=created_user.id,
+                email=created_user.email
+            ).model_dump()
+        )
     
 
     def login_user(self, email: str, password: str) -> str:
