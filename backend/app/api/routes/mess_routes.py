@@ -21,3 +21,8 @@ def create(
 ):
     service = MessService(db, resp_builder)
     return service.create_mess(mess)
+
+@router.get("fetch_messes", response_model=MessResponse)
+def fetch_messes(db:Session = Depends(get_db), resp_builder:ResponseBuilder = Depends(get_response_builder)):
+    service = MessService(db, resp_builder)
+    return service.fetch_messes()

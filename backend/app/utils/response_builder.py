@@ -12,9 +12,11 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR
 )
 
+from app.constants import messages
+
 
 class ResponseBuilder:
-    def build_success_response(self, message: str, data: any = None):
+    def build_success_response(self, message: str= None, data: any = None):
         return JSONResponse(
             status_code=HTTP_200_OK,
             content={
